@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-ins Management - DojoPro Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .nav-brand a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .content-header h1 {
+            color: #333;
+            font-size: 2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 0;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-completed {
+            background: #6c757d;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+
+        .footer {
+            margin-top: 4rem;
+            background: #343a40;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .duration {
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .content-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .main-content {
+                padding: 0 1rem;
+            }
+
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+
+            .table th,
+            .table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard">DojoPro Admin</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/members" class="nav-link">
+                    <i class="fas fa-users"></i> Members
+                </a>
+                <a href="/locations" class="nav-link">
+                    <i class="fas fa-map-marker-alt"></i> Locations
+                </a>
+                <a href="/staff" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Staff
+                </a>
+                <a href="/checkins" class="nav-link active">
+                    <i class="fas fa-clock"></i> Check-ins
+                </a>
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1><i class="fas fa-clock"></i> Check-ins Management</h1>
+        </div>
+
+        <% if (messages.success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= messages.success %>
+            </div>
+        <% } %>
+
+        <% if (messages.error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= messages.error %>
+            </div>
+        <% } %>
+
+        <% if (checkins && checkins.length > 0) { %>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock"></i> Recent Check-ins</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-user"></i> Member</th>
+                                    <th><i class="fas fa-map-marker-alt"></i> Location</th>
+                                    <th><i class="fas fa-sign-in-alt"></i> Check-in Time</th>
+                                    <th><i class="fas fa-sign-out-alt"></i> Check-out Time</th>
+                                    <th><i class="fas fa-clock"></i> Duration</th>
+                                    <th><i class="fas fa-info-circle"></i> Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% checkins.forEach(checkin => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= checkin.first_name %> <%= checkin.last_name %></strong><br>
+                                            <small style="color: #6c757d;"><%= checkin.email %></small>
+                                        </td>
+                                        <td><%= checkin.location_name %></td>
+                                        <td>
+                                            <% 
+                                                const checkinTime = new Date(checkin.local_check_in_time);
+                                                const options = { 
+                                                    year: 'numeric', 
+                                                    month: 'short', 
+                                                    day: 'numeric', 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                };
+                                            %>
+                                            <%= checkinTime.toLocaleDateString('en-US', options) %>
+                                        </td>
+                                        <td>
+                                            <% if (checkin.local_check_out_time) { %>
+                                                <% 
+                                                    const checkoutTime = new Date(checkin.local_check_out_time);
+                                                %>
+                                                <%= checkoutTime.toLocaleDateString('en-US', options) %>
+                                            <% } else { %>
+                                                <span style="color: #6c757d;">Still checked in</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (checkin.local_check_out_time) { %>
+                                                <% 
+                                                    const checkinTime = new Date(checkin.local_check_in_time);
+                                                    const checkoutTime = new Date(checkin.local_check_out_time);
+                                                    const duration = Math.floor((checkoutTime - checkinTime) / (1000 * 60)); // minutes
+                                                    const hours = Math.floor(duration / 60);
+                                                    const minutes = duration % 60;
+                                                %>
+                                                <span class="duration">
+                                                    <% if (hours > 0) { %>
+                                                        <%= hours %>h <%= minutes %>m
+                                                    <% } else { %>
+                                                        <%= minutes %>m
+                                                    <% } %>
+                                                </span>
+                                            <% } else { %>
+                                                <% 
+                                                    const checkinTime = new Date(checkin.local_check_in_time);
+                                                    const now = new Date();
+                                                    const duration = Math.floor((now - checkinTime) / (1000 * 60)); // minutes
+                                                    const hours = Math.floor(duration / 60);
+                                                    const minutes = duration % 60;
+                                                %>
+                                                <span class="duration">
+                                                    <% if (hours > 0) { %>
+                                                        <%= hours %>h <%= minutes %>m
+                                                    <% } else { %>
+                                                        <%= minutes %>m
+                                                    <% } %>
+                                                    <small style="color: #6c757d;">(ongoing)</small>
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (checkin.local_check_out_time) { %>
+                                                <span class="status-badge status-completed">Completed</span>
+                                            <% } else { %>
+                                                <span class="status-badge status-active">Active</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="fas fa-clock"></i>
+                <h3>No Check-ins Found</h3>
+                <p>Member check-ins will appear here once members start using the system.</p>
+            </div>
+        <% } %>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 DojoPro. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/js/main.js"></script>
+</body>
+</html>

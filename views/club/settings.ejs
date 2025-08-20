@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title>Club Settings - DojoPro Admin</title>
     <style>
         * {
             margin: 0;
@@ -13,332 +13,432 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
+            background-color: #f8f9fa;
             line-height: 1.6;
         }
 
-        .header {
+        .navbar {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 2rem;
+            padding: 1rem 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .header-content {
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 0 2rem;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .club-info {
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        .club-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .user-info {
-            text-align: right;
-        }
-
-        .btn-logout {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
+        .nav-brand a {
             color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            width: 250px;
-            height: calc(100vh - 80px);
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            padding: 2rem 0;
-        }
-
-        .nav-item {
-            padding: 12px 24px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .nav-item a {
-            color: #333;
             text-decoration: none;
-            font-weight: 500;
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
-        .nav-item:hover {
-            background: #f8f9fa;
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
         }
 
-        .nav-item.active {
-            background: #e3f2fd;
-            border-right: 3px solid #2196f3;
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
         }
 
         .main-content {
-            margin-left: 250px;
-            margin-top: 80px;
-            padding: 2rem;
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .page-header {
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .page-title {
-            font-size: 2rem;
+        .content-header h1 {
             color: #333;
-            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .page-subtitle {
-            color: #666;
-            font-size: 1.1rem;
+        .alert {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         .card {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
             margin-bottom: 2rem;
         }
 
         .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #f0f0f0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 600;
+        .card-header h3 {
+            margin: 0;
             color: #333;
+            font-size: 1.25rem;
+            font-weight: 600;
         }
 
         .card-body {
-            padding: 1.5rem;
+            padding: 2rem;
         }
 
         .form-group {
             margin-bottom: 1.5rem;
         }
 
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        input, textarea {
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
+            padding: 0.875rem 1rem;
             border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
         }
 
-        input:focus, textarea:focus {
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
         }
 
-        textarea {
+        .form-group textarea {
             resize: vertical;
             min-height: 100px;
         }
 
+        .help-text {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .color-input {
+            width: 80px !important;
+            height: 50px;
+            padding: 0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            padding-top: 2rem;
+            border-top: 2px solid #f8f9fa;
+            margin-top: 2rem;
+            justify-content: flex-start;
+        }
+
         .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 12px 24px;
+            padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
             text-decoration: none;
-            display: inline-block;
-            transition: transform 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
         }
 
-        .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
 
-        .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
-        .form-help {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 0.5rem;
+        .footer {
+            margin-top: 4rem;
+            background: #343a40;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .content-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .main-content {
+                padding: 0 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
         }
     </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-content">
-            <div class="logo">🥋 DojoPro</div>
-            <div class="club-info">
-                <% if (userClub) { %>
-                    <div class="club-name"><%= userClub.club_name %></div>
-                    <div style="font-size: 0.9rem; opacity: 0.8;">Club Management Portal</div>
-                <% } %>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard">DojoPro Admin</a>
             </div>
-            <div class="user-info">
-                <div><%= user.first_name %> <%= user.last_name %></div>
-                <form method="POST" action="/logout" style="display: inline;">
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/members" class="nav-link">
+                    <i class="fas fa-users"></i> Members
+                </a>
+                <a href="/locations" class="nav-link">
+                    <i class="fas fa-map-marker-alt"></i> Locations
+                </a>
+                <a href="/staff" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Staff
+                </a>
+                <a href="/checkins" class="nav-link">
+                    <i class="fas fa-clock"></i> Check-ins
+                </a>
+                <a href="/settings" class="nav-link active">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="nav-item">
-            <a href="/dashboard">📊 Dashboard</a>
-        </div>
-        <div class="nav-item active">
-            <a href="/club">🏢 Club Settings</a>
-        </div>
-        <div class="nav-item">
-            <a href="/locations">📍 Locations</a>
-        </div>
-        <div class="nav-item">
-            <a href="/members">👥 Members</a>
-        </div>
-        <div class="nav-item">
-            <a href="/staff">👨‍💼 Staff</a>
-        </div>
-        <div class="nav-item">
-            <a href="/checkins">✅ Check-ins</a>
-        </div>
-        <div class="nav-item">
-            <a href="/reports">📈 Reports</a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
     <div class="main-content">
-        <div class="container">
-            <!-- Flash Messages -->
-            <% if (messages.success && messages.success.length > 0) { %>
-                <% messages.success.forEach(function(message) { %>
-                    <div class="alert alert-success"><%= message %></div>
-                <% }); %>
-            <% } %>
-            
-            <% if (messages.error && messages.error.length > 0) { %>
-                <% messages.error.forEach(function(message) { %>
-                    <div class="alert alert-error"><%= message %></div>
-                <% }); %>
-            <% } %>
+        <div class="content-header">
+            <h1><i class="fas fa-cog"></i> Club Settings</h1>
+        </div>
 
-            <div class="page-header">
-                <h1 class="page-title">Club Settings</h1>
-                <p class="page-subtitle">Manage your club information and preferences.</p>
+        <% if (messages.success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= messages.success %>
             </div>
+        <% } %>
 
-            <!-- Club Information -->
+        <% if (messages.error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= messages.error %>
+            </div>
+        <% } %>
+
+        <form method="POST" action="/settings">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Basic Information</h3>
+                    <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="/club/update">
-                        <div class="form-group">
-                            <label for="club_name">Club Name *</label>
-                            <input type="text" id="club_name" name="club_name" value="<%= club.club_name %>" required>
-                            <div class="form-help">This is how your club name appears throughout the system.</div>
-                        </div>
+                    <div class="form-group">
+                        <label for="club_name">Club Name *</label>
+                        <input type="text" id="club_name" name="club_name" required 
+                               value="<%= clubDetails ? clubDetails.club_name : '' %>"
+                               placeholder="Enter your club name">
+                        <small class="help-text">This is how your club name appears throughout the system</small>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="description">Description</label>
-                            <textarea id="description" name="description" placeholder="Tell people about your club..."><%= club.description || '' %></textarea>
-                            <div class="form-help">A brief description of your club, martial arts style, and what makes you unique.</div>
-                        </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" 
+                                  placeholder="Brief description of your club, martial arts style, and what makes you unique"><%= clubDetails ? clubDetails.description || '' : '' %></textarea>
+                        <small class="help-text">A brief description of your club, martial arts style, and what makes you unique</small>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="website_url">Website URL</label>
-                            <input type="url" id="website_url" name="website_url" value="<%= club.website_url || '' %>" placeholder="https://yourclub.com">
-                            <div class="form-help">Your club's website or social media page.</div>
-                        </div>
+                    <div class="form-group">
+                        <label for="website_url">Website URL</label>
+                        <input type="url" id="website_url" name="website_url" 
+                               value="<%= clubDetails ? clubDetails.website_url || '' : '' %>"
+                               placeholder="https://yourclub.com">
+                        <small class="help-text">Your club's website (optional)</small>
+                    </div>
 
-                        <button type="submit" class="btn">Save Changes</button>
-                        <a href="/dashboard" class="btn btn-secondary" style="margin-left: 1rem;">Cancel</a>
-                    </form>
+                    <div class="form-group">
+                        <label for="logo_url">Logo URL</label>
+                        <input type="url" id="logo_url" name="logo_url" 
+                               value="<%= clubSettings ? clubSettings.logo_url || '' : '' %>"
+                               placeholder="https://example.com/logo.png">
+                        <small class="help-text">URL to your club logo image (optional)</small>
+                    </div>
                 </div>
             </div>
 
-            <!-- Club Details -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Club Details</h3>
+                    <h3><i class="fas fa-palette"></i> Appearance & Branding</h3>
                 </div>
                 <div class="card-body">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
-                        <div>
-                            <h4 style="color: #333; margin-bottom: 1rem;">System Information</h4>
-                            <p><strong>Club ID:</strong> <%= club.club_id %></p>
-                            <p><strong>Subdomain:</strong> <%= club.subdomain %></p>
-                            <p><strong>Status:</strong> <span style="color: #28a745; font-weight: 600;">Active</span></p>
-                            <p><strong>Created:</strong> <%= new Date(club.created_at).toLocaleDateString() %></p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="primary_color">Primary Color</label>
+                            <input type="color" id="primary_color" name="primary_color" class="color-input"
+                                   value="<%= clubSettings ? clubSettings.primary_color || '#667eea' : '#667eea' %>">
+                            <small class="help-text">Main brand color for headers and buttons</small>
                         </div>
-                        <div>
-                            <h4 style="color: #333; margin-bottom: 1rem;">Quick Stats</h4>
-                            <p><strong>Total Members:</strong> Loading...</p>
-                            <p><strong>Total Locations:</strong> Loading...</p>
-                            <p><strong>Staff Members:</strong> Loading...</p>
-                            <p><strong>Last Updated:</strong> <%= new Date(club.updated_at).toLocaleDateString() %></p>
+
+                        <div class="form-group">
+                            <label for="secondary_color">Secondary Color</label>
+                            <input type="color" id="secondary_color" name="secondary_color" class="color-input"
+                                   value="<%= clubSettings ? clubSettings.secondary_color || '#764ba2' : '#764ba2' %>">
+                            <small class="help-text">Accent color for highlights and links</small>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-globe"></i> Regional Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="locale">Language/Locale</label>
+                            <select id="locale" name="locale">
+                                <option value="en-US" <%= clubSettings && clubSettings.locale === 'en-US' ? 'selected' : '' %>>English (US)</option>
+                                <option value="en-GB" <%= clubSettings && clubSettings.locale === 'en-GB' ? 'selected' : '' %>>English (UK)</option>
+                                <option value="es-ES" <%= clubSettings && clubSettings.locale === 'es-ES' ? 'selected' : '' %>>Spanish</option>
+                                <option value="fr-FR" <%= clubSettings && clubSettings.locale === 'fr-FR' ? 'selected' : '' %>>French</option>
+                                <option value="de-DE" <%= clubSettings && clubSettings.locale === 'de-DE' ? 'selected' : '' %>>German</option>
+                                <option value="pt-BR" <%= clubSettings && clubSettings.locale === 'pt-BR' ? 'selected' : '' %>>Portuguese (Brazil)</option>
+                            </select>
+                            <small class="help-text">Default language for date formats and system messages</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="timezone">Default Timezone</label>
+                            <select id="timezone" name="timezone">
+                                <option value="America/New_York" <%= clubSettings && clubSettings.timezone === 'America/New_York' ? 'selected' : '' %>>Eastern Time (America/New_York)</option>
+                                <option value="America/Chicago" <%= clubSettings && clubSettings.timezone === 'America/Chicago' ? 'selected' : '' %>>Central Time (America/Chicago)</option>
+                                <option value="America/Denver" <%= clubSettings && clubSettings.timezone === 'America/Denver' ? 'selected' : '' %>>Mountain Time (America/Denver)</option>
+                                <option value="America/Los_Angeles" <%= clubSettings && clubSettings.timezone === 'America/Los_Angeles' ? 'selected' : '' %>>Pacific Time (America/Los_Angeles)</option>
+                                <option value="America/Phoenix" <%= clubSettings && clubSettings.timezone === 'America/Phoenix' ? 'selected' : '' %>>Arizona Time (America/Phoenix)</option>
+                                <option value="America/Anchorage" <%= clubSettings && clubSettings.timezone === 'America/Anchorage' ? 'selected' : '' %>>Alaska Time (America/Anchorage)</option>
+                                <option value="Pacific/Honolulu" <%= clubSettings && clubSettings.timezone === 'Pacific/Honolulu' ? 'selected' : '' %>>Hawaii Time (Pacific/Honolulu)</option>
+                                <option value="Europe/London" <%= clubSettings && clubSettings.timezone === 'Europe/London' ? 'selected' : '' %>>London Time (Europe/London)</option>
+                                <option value="Europe/Paris" <%= clubSettings && clubSettings.timezone === 'Europe/Paris' ? 'selected' : '' %>>Paris Time (Europe/Paris)</option>
+                                <option value="Asia/Tokyo" <%= clubSettings && clubSettings.timezone === 'Asia/Tokyo' ? 'selected' : '' %>>Tokyo Time (Asia/Tokyo)</option>
+                            </select>
+                            <small class="help-text">Default timezone for your club (can be overridden per location)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </form>
     </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 DojoPro. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/js/main.js"></script>
 </body>
 </html>

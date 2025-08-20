@@ -317,7 +317,14 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // Club Settings Routes
-app.get('/club', requireAuth, requireClubAccess, async (req, res) => {
+// Settings route (redirect to club settings)
+//app.get('/settings', requireAuth, requireClubAccess, (req, res) => {
+//    res.redirect('/club');
+//});
+
+
+// GET /settings - Club settings page
+app.get('/settings', requireAuth, requireClubAccess, async (req, res) => {
     try {
         // Get club details
         const clubDetails = await new Promise((resolve, reject) => {
@@ -327,15 +334,81 @@ app.get('/club', requireAuth, requireClubAccess, async (req, res) => {
             });
         });
 
-        res.render('club/settings', {
-            title: 'Club Settings - DojoPro Admin',
-            club: clubDetails
+        // Get club settings
+        const clubSettings = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM club_settings WHERE club_id = ?', [req.userClub.club_id], (err, results) => {
+                if (err) reject(err);
+                else resolve(results[0] || {});
+            });
         });
 
+        res.render('club/settings', {
+            title: 'Club Settings',
+            clubDetails,
+            clubSettings,
+            messages: req.flash()
+        });
     } catch (error) {
-        console.error('Club settings error:', error);
-        req.flash('error', 'Error loading club settings');
+        console.error('Settings error:', error);
+        req.flash('error', 'Error loading settings');
         res.redirect('/dashboard');
+    }
+});
+
+// POST /settings - Update club settings
+app.post('/settings', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const {
+            club_name,
+            description,
+            website_url,
+            logo_url,
+            primary_color,
+            secondary_color,
+            locale,
+            timezone
+        } = req.body;
+
+        const clubId = req.userClub.club_id;
+
+        // Update club details
+        await new Promise((resolve, reject) => {
+            db.query(
+                'UPDATE clubs SET club_name = ?, description = ?, website_url = ?, logo_url = ?, updated_at = CURRENT_TIMESTAMP WHERE club_id = ?',
+                [club_name, description, website_url || null, logo_url || null, clubId],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        // Update or insert club settings
+        await new Promise((resolve, reject) => {
+            db.query(
+                `INSERT INTO club_settings (club_id, logo_url, primary_color, secondary_color, locale, timezone, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                 ON DUPLICATE KEY UPDATE
+                 logo_url = VALUES(logo_url),
+                 primary_color = VALUES(primary_color),
+                 secondary_color = VALUES(secondary_color),
+                 locale = VALUES(locale),
+                 timezone = VALUES(timezone),
+                 updated_at = CURRENT_TIMESTAMP`,
+                [clubId, logo_url || null, primary_color || null, secondary_color || null, locale || 'en-US', timezone || 'America/New_York'],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Club settings updated successfully');
+        res.redirect('/settings');
+    } catch (error) {
+        console.error('Error updating settings:', error);
+        req.flash('error', 'Error updating settings');
+        res.redirect('/settings');
     }
 });
 
@@ -519,3 +592,439 @@ app.get('/locations', requireAuth, requireClubAccess, async (req, res) => {
         res.redirect('/dashboard');
     }
 });
+
+
+// GET /locations/add - Show add location form
+app.get('/locations/add', requireAuth, requireClubAccess, (req, res) => {
+    res.render('locations/add', {
+        title: 'Add New Location',
+        messages: req.flash(),
+        formData: {}
+    });
+});
+
+// POST /locations/add - Create new location
+app.post('/locations/add', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const {
+            location_name,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            postal_code,
+            phone,
+            capacity,
+            timezone,
+            is_primary_location
+        } = req.body;
+
+        const clubId = req.userClub.club_id;
+
+        // If this is being set as primary, unset any existing primary location
+        if (is_primary_location) {
+            await new Promise((resolve, reject) => {
+                db.query('UPDATE locations SET is_primary_location = 0 WHERE club_id = ?',
+                    [clubId], (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    });
+            });
+        }
+
+        await new Promise((resolve, reject) => {
+            db.query(
+                `INSERT INTO locations (
+                    club_id, location_name, address_line1, address_line2, 
+                    city, state, postal_code, phone, capacity, timezone, is_primary_location
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    clubId, location_name, address_line1, address_line2 || null,
+                    city, state, postal_code, phone || null, capacity || null,
+                    timezone || 'America/New_York', is_primary_location ? 1 : 0
+                ],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Location added successfully');
+        res.redirect('/locations');
+    } catch (error) {
+        console.error('Error adding location:', error);
+        req.flash('error', 'Error adding location');
+        res.render('locations/add', {
+            title: 'Add New Location',
+            messages: req.flash(),
+            formData: req.body
+        });
+    }
+});
+
+// GET /locations/:id/edit - Show edit location form
+app.get('/locations/:id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const clubId = req.userClub.club_id;
+        const locationId = req.params.id;
+
+        const location = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM locations WHERE location_id = ? AND club_id = ?',
+                [locationId, clubId], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results[0]);
+                });
+        });
+
+        if (!location) {
+            req.flash('error', 'Location not found');
+            return res.redirect('/locations');
+        }
+
+        res.render('locations/edit', {
+            title: 'Edit Location',
+            location: location,
+            messages: req.flash()
+        });
+    } catch (error) {
+        console.error('Error fetching location:', error);
+        req.flash('error', 'Error loading location');
+        res.redirect('/locations');
+    }
+});
+
+// POST /locations/:id/edit - Update location
+app.post('/locations/:id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const {
+            location_name,
+            address_line1,
+            address_line2,
+            city,
+            state,
+            postal_code,
+            phone,
+            capacity,
+            timezone,
+            is_primary_location
+        } = req.body;
+
+        const clubId = req.userClub.club_id;
+        const locationId = req.params.id;
+
+        // If this is being set as primary, unset any existing primary location
+        if (is_primary_location) {
+            await new Promise((resolve, reject) => {
+                db.query('UPDATE locations SET is_primary_location = 0 WHERE club_id = ? AND location_id != ?',
+                    [clubId, locationId], (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    });
+            });
+        }
+
+        await new Promise((resolve, reject) => {
+            db.query(
+                `UPDATE locations SET 
+                    location_name = ?, address_line1 = ?, address_line2 = ?,
+                    city = ?, state = ?, postal_code = ?, phone = ?, capacity = ?,
+                    timezone = ?, is_primary_location = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE location_id = ? AND club_id = ?`,
+                [
+                    location_name, address_line1, address_line2 || null,
+                    city, state, postal_code, phone || null, capacity || null,
+                    timezone || 'America/New_York', is_primary_location ? 1 : 0,
+                    locationId, clubId
+                ],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Location updated successfully');
+        res.redirect('/locations');
+    } catch (error) {
+        console.error('Error updating location:', error);
+        req.flash('error', 'Error updating location');
+        res.redirect(`/locations/${req.params.id}/edit`);
+    }
+});
+
+// POST /locations/:id/delete - Delete location
+app.post('/locations/:id/delete', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const clubId = req.userClub.club_id;
+        const locationId = req.params.id;
+
+        // Check if this is the primary location
+        const location = await new Promise((resolve, reject) => {
+            db.query('SELECT is_primary_location FROM locations WHERE location_id = ? AND club_id = ?',
+                [locationId, clubId], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results[0]);
+                });
+        });
+
+        if (!location) {
+            req.flash('error', 'Location not found');
+            return res.redirect('/locations');
+        }
+
+        if (location.is_primary_location) {
+            req.flash('error', 'Cannot delete the primary location');
+            return res.redirect('/locations');
+        }
+
+        await new Promise((resolve, reject) => {
+            db.query('DELETE FROM locations WHERE location_id = ? AND club_id = ?',
+                [locationId, clubId], (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                });
+        });
+
+        req.flash('success', 'Location deleted successfully');
+        res.redirect('/locations');
+    } catch (error) {
+        console.error('Error deleting location:', error);
+        req.flash('error', 'Error deleting location');
+        res.redirect('/locations');
+    }
+});
+
+
+// GET /staff - List all staff
+app.get('/staff', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const staff = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT cs.*, u.first_name, u.last_name, u.email, u.phone 
+                FROM club_staff cs 
+                JOIN users u ON cs.user_id = u.user_id 
+                WHERE cs.club_id = ? 
+                ORDER BY cs.role, u.last_name, u.first_name
+            `, [req.userClub.club_id], (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            });
+        });
+        
+        res.render('staff/index', {
+            title: 'Staff Management',
+            staff
+        });
+    } catch (error) {
+        console.error('Staff error:', error);
+        req.flash('error', 'Error loading staff');
+        res.redirect('/dashboard');
+    }
+});
+
+// GET /staff/add - Show add staff form
+app.get('/staff/add', requireAuth, requireClubAccess, (req, res) => {
+    res.render('staff/add', {
+        title: 'Add New Staff',
+        messages: req.flash(),
+        formData: {}
+    });
+});
+
+// POST /staff/add - Create new staff
+app.post('/staff/add', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const { email, first_name, last_name, phone, role, is_primary_contact } = req.body;
+        const clubId = req.userClub.club_id;
+
+        // Check if user already exists
+        let user = await new Promise((resolve, reject) => {
+            db.query('SELECT user_id FROM users WHERE email = ?', [email], (err, results) => {
+                if (err) reject(err);
+                else resolve(results[0]);
+            });
+        });
+
+        let userId;
+        if (user) {
+            userId = user.user_id;
+        } else {
+            // Create new user with temporary password
+            const tempPassword = Math.random().toString(36).slice(-8);
+            const bcrypt = require('bcryptjs');
+            const hashedPassword = await bcrypt.hash(tempPassword, 10);
+            
+            const result = await new Promise((resolve, reject) => {
+                db.query(
+                    'INSERT INTO users (email, password_hash, first_name, last_name, phone) VALUES (?, ?, ?, ?, ?)',
+                    [email, hashedPassword, first_name, last_name, phone],
+                    (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    }
+                );
+            });
+            userId = result.insertId;
+        }
+
+        // Add to club staff
+        await new Promise((resolve, reject) => {
+            db.query(
+                'INSERT INTO club_staff (club_id, user_id, role, is_primary_contact) VALUES (?, ?, ?, ?)',
+                [clubId, userId, role, is_primary_contact ? 1 : 0],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Staff member added successfully');
+        res.redirect('/staff');
+    } catch (error) {
+        console.error('Error adding staff:', error);
+        req.flash('error', 'Error adding staff member');
+        res.render('staff/add', {
+            title: 'Add New Staff',
+            messages: req.flash(),
+            formData: req.body
+        });
+    }
+});
+
+// GET /staff/:id/edit - Show edit staff form
+app.get('/staff/:id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const clubId = req.userClub.club_id;
+        const userId = req.params.id;
+
+        const staff = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT cs.*, u.first_name, u.last_name, u.email, u.phone 
+                FROM club_staff cs 
+                JOIN users u ON cs.user_id = u.user_id 
+                WHERE cs.user_id = ? AND cs.club_id = ?
+            `, [userId, clubId], (err, results) => {
+                if (err) reject(err);
+                else resolve(results[0]);
+            });
+        });
+
+        if (!staff) {
+            req.flash('error', 'Staff member not found');
+            return res.redirect('/staff');
+        }
+
+        res.render('staff/edit', {
+            title: 'Edit Staff Member',
+            staff: staff,
+            messages: req.flash()
+        });
+    } catch (error) {
+        console.error('Error fetching staff:', error);
+        req.flash('error', 'Error loading staff member');
+        res.redirect('/staff');
+    }
+});
+
+// POST /staff/:id/edit - Update staff
+app.post('/staff/:id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const { first_name, last_name, phone, role, is_primary_contact } = req.body;
+        const clubId = req.userClub.club_id;
+        const userId = req.params.id;
+
+        // Update user info
+        await new Promise((resolve, reject) => {
+            db.query(
+                'UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE user_id = ?',
+                [first_name, last_name, phone, userId],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        // Update club staff info
+        await new Promise((resolve, reject) => {
+            db.query(
+                'UPDATE club_staff SET role = ?, is_primary_contact = ? WHERE user_id = ? AND club_id = ?',
+                [role, is_primary_contact ? 1 : 0, userId, clubId],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Staff member updated successfully');
+        res.redirect('/staff');
+    } catch (error) {
+        console.error('Error updating staff:', error);
+        req.flash('error', 'Error updating staff member');
+        res.redirect(`/staff/${req.params.id}/edit`);
+    }
+});
+
+// POST /staff/:id/delete - Delete staff
+app.post('/staff/:id/delete', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const clubId = req.userClub.club_id;
+        const userId = req.params.id;
+
+        await new Promise((resolve, reject) => {
+            db.query(
+                'DELETE FROM club_staff WHERE user_id = ? AND club_id = ?',
+                [userId, clubId],
+                (err, result) => {
+                    if (err) reject(err);
+                    else resolve(result);
+                }
+            );
+        });
+
+        req.flash('success', 'Staff member removed successfully');
+        res.redirect('/staff');
+    } catch (error) {
+        console.error('Error deleting staff:', error);
+        req.flash('error', 'Error removing staff member');
+        res.redirect('/staff');
+    }
+});
+
+
+// GET /check-ins - List all check-ins
+app.get('/checkins', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const checkins = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT ci.*, 
+                       m.first_name, m.last_name, m.email,
+                       l.location_name,
+                       CONVERT_TZ(ci.check_in_time, 'UTC', COALESCE(l.timezone, 'America/New_York')) as local_check_in_time,
+                       CONVERT_TZ(ci.check_out_time, 'UTC', COALESCE(l.timezone, 'America/New_York')) as local_check_out_time
+                FROM check_ins ci
+                JOIN members m ON ci.member_id = m.member_id
+                JOIN locations l ON ci.location_id = l.location_id
+                WHERE ci.club_id = ?
+                ORDER BY ci.check_in_time DESC
+                LIMIT 100
+            `, [req.userClub.club_id], (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            });
+        });
+        
+        res.render('checkins/index', {
+            title: 'Checkins Management',
+            checkins
+        });
+    } catch (error) {
+        console.error('Checkins error:', error);
+        req.flash('error', 'Error loading checkins');
+        res.redirect('/dashboard');
+    }
+});
+
