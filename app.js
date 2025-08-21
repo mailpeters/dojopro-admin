@@ -10,6 +10,22 @@ require('dotenv').config();
 const app = express();
 const PORT = 3002;
 
+const fs = require('fs');
+const multer = require('multer');
+
+const uploadDir = path.join(__dirname, 'public', 'uploads', 'logos');
+fs.mkdirSync(uploadDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `club_${req.session?.clubId || 'unknown'}_${Date.now()}${ext}`);
+  }
+});
+const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
+
+
+
 // Database connection
 const db = mysql.createConnection({
     host: 'localhost',
@@ -66,6 +82,30 @@ const requireAuth = (req, res, next) => {
         res.redirect('/login');
     }
 };
+
+
+// Ensure active club in session
+app.use(async (req, res, next) => {
+  try {
+    if (!req.session?.userId) return next();
+    if (!req.session.clubId) {
+      const [rows] = await pool.query(
+        `SELECT cs.club_id
+           FROM club_staff cs
+           WHERE cs.user_id = ? 
+           ORDER BY (cs.role='owner') DESC, cs.role, cs.club_id
+           LIMIT 1`,
+        [req.session.userId]
+      );
+      if (rows && rows[0]) req.session.clubId = rows[0].club_id;
+    }
+    next();
+  } catch (e) {
+    console.error('setActiveClub error', e);
+    next();
+  }
+});
+
 
 // Middleware to check if user owns the club
 const requireClubAccess = async (req, res, next) => {
@@ -178,6 +218,67 @@ app.post('/login', async (req, res) => {
         res.redirect('/login');
     }
 });
+
+
+// Save club settings
+app.post('/club/settings', /* auth? */ upload.single('logo'), async (req, res) => {
+  const userId = req.session?.userId;      // adjust to your session keys
+  const clubId = req.session?.clubId;      // the active club for this admin
+
+  if (!clubId) return res.status(400).send('No active club');
+
+  const {
+    club_name, website_url, description,
+    subdomain, status,
+    primary_color, secondary_color,
+    locale, timezone,
+    current_logo_url
+  } = req.body;
+
+  const logo_url = req.file
+    ? `/uploads/logos/${req.file.filename}`
+    : (current_logo_url || null);
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE clubs
+         SET club_name=?, website_url=?, description=?, subdomain=?, status=?
+       WHERE club_id=?`,
+      [club_name || null, website_url || null, description || null,
+       subdomain || null, status || 'active', clubId]
+    );
+
+    await conn.query(
+      `INSERT INTO club_settings (club_id, logo_url, primary_color, secondary_color, locale, timezone)
+       VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE
+         logo_url=VALUES(logo_url),
+         primary_color=VALUES(primary_color),
+         secondary_color=VALUES(secondary_color),
+         locale=VALUES(locale),
+         timezone=VALUES(timezone)`,
+      [clubId, logo_url, primary_color || null, secondary_color || null,
+       locale || 'en-US', timezone || 'America/New_York']
+    );
+
+    await conn.commit();
+    req.flash?.('success', 'Settings saved');
+    res.redirect('/club/settings');
+  } catch (e) {
+    await conn.rollback();
+    console.error(e);
+    req.flash?.('error', 'Save failed');
+    res.redirect('/club/settings');
+  } finally {
+    conn.release();
+  }
+});
+
+
+
 
 // Password setup page
 app.get('/setup-password', (req, res) => {

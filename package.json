@@ -1,5 +1,3 @@
-                                                                     
-
 {
   "name": "dojopro-admin",
   "version": "1.0.0",
@@ -10,18 +8,24 @@
     "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["dojopro", "martial-arts", "club-management", "admin"],
+  "keywords": [
+    "dojopro",
+    "martial-arts",
+    "club-management",
+    "admin"
+  ],
   "author": "DojoPro",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "ejs": "^3.1.9",
-    "mysql2": "^3.6.0",
     "bcryptjs": "^2.4.3",
-    "express-session": "^1.17.3",
-    "express-flash": "^0.0.2",
     "cookie-parser": "^1.4.6",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-flash": "^0.0.2",
+    "express-session": "^1.17.3",
+    "multer": "^2.0.2",
+    "mysql2": "^3.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

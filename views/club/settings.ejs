@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Settings - DojoPro Admin</title>
+    <title><%= title || 'Club Settings' %></title>
     <link href="/css/admin.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -60,125 +60,117 @@
             <h1><i class="fas fa-cog"></i> Club Settings</h1>
         </div>
 
-        <% if (messages.success) { %>
+        <% if (messages && messages.success) { %>
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i> <%= messages.success %>
             </div>
         <% } %>
 
-        <% if (messages.error) { %>
+        <% if (messages && messages.error) { %>
             <div class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i> <%= messages.error %>
             </div>
         <% } %>
 
-        <form method="POST" action="/settings">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
-                </div>
-                <div class="card-body">
+        <div class="card">
+            <form method="POST" action="/club/settings">
+                <!-- Club Profile -->
+                <div class="section-title"><i class="fas fa-id-card"></i> Club Profile</div>
+                <div class="form-grid">
                     <div class="form-group">
-                        <label for="club_name">Club Name *</label>
-                        <input type="text" id="club_name" name="club_name" required 
-                               value="<%= clubDetails ? clubDetails.club_name : '' %>"
-                               placeholder="Enter your club name">
-                        <small class="help-text">This is how your club name appears throughout the system</small>
+                        <label for="club_name" class="form-label">Club Name *</label>
+                        <input id="club_name" name="club_name" type="text" class="form-input" required
+                               value="<%= clubDetails ? (clubDetails.club_name || '') : '' %>">
                     </div>
 
                     <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description" 
-                                  placeholder="Brief description of your club, martial arts style, and what makes you unique"><%= clubDetails ? clubDetails.description || '' : '' %></textarea>
-                        <small class="help-text">A brief description of your club, martial arts style, and what makes you unique</small>
+                        <label for="website_url" class="form-label">Website</label>
+                        <input id="website_url" name="website_url" type="url" class="form-input"
+                               value="<%= clubDetails ? (clubDetails.website_url || '') : '' %>">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" rows="3" class="form-input"
+                              placeholder="Brief description of your club"><%= clubDetails ? (clubDetails.description || '') : '' %></textarea>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="subdomain" class="form-label">Subdomain</label>
+                        <input id="subdomain" name="subdomain" type="text" class="form-input"
+                               pattern="^[a-z0-9-]{3,63}$" placeholder="my-dojo"
+                               value="<%= clubDetails ? (clubDetails.subdomain || '') : '' %>">
+                        <div class="form-help">Your site will be <em>subdomain</em>.dojopro.com</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="website_url">Website URL</label>
-                        <input type="url" id="website_url" name="website_url" 
-                               value="<%= clubDetails ? clubDetails.website_url || '' : '' %>"
-                               placeholder="https://yourclub.com">
-                        <small class="help-text">Your club's website (optional)</small>
+                        <label for="status" class="form-label">Status</label>
+                        <% const st = clubDetails ? clubDetails.status : 'active'; %>
+                        <select id="status" name="status" class="form-select">
+                            <option value="active" <%= st==='active'?'selected':'' %>>Active</option>
+                            <option value="suspended" <%= st==='suspended'?'selected':'' %>>Suspended</option>
+                            <option value="deleted" <%= st==='deleted'?'selected':'' %>>Deleted</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Branding -->
+                <div class="section-title"><i class="fas fa-brush"></i> Branding</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="logo_url" class="form-label">Logo URL</label>
+                        <input id="logo_url" name="logo_url" type="url" class="form-input"
+                               placeholder="https://example.com/logo.png"
+                               value="<%= clubSettings ? (clubSettings.logo_url || '') : '' %>">
+                        <div class="form-help">Paste a direct image URL. File upload can be added later.</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="logo_url">Logo URL</label>
-                        <input type="url" id="logo_url" name="logo_url" 
-                               value="<%= clubSettings ? clubSettings.logo_url || '' : '' %>"
-                               placeholder="https://example.com/logo.png">
-                        <small class="help-text">URL to your club logo image (optional)</small>
+                        <label for="primary_color" class="form-label">Primary Color</label>
+                        <input id="primary_color" name="primary_color" type="color" class="form-input"
+                               value="<%= clubSettings ? (clubSettings.primary_color || '#4f46e5') : '#4f46e5' %>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="secondary_color" class="form-label">Secondary Color</label>
+                        <input id="secondary_color" name="secondary_color" type="color" class="form-input"
+                               value="<%= clubSettings ? (clubSettings.secondary_color || '#0ea5e9') : '#0ea5e9' %>">
                     </div>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-palette"></i> Appearance & Branding</h3>
-                </div>
-                <div class="card-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="primary_color">Primary Color</label>
-                            <input type="color" id="primary_color" name="primary_color" class="color-input"
-                                   value="<%= clubSettings ? clubSettings.primary_color || '#667eea' : '#667eea' %>">
-                            <small class="help-text">Main brand color for headers and buttons</small>
-                        </div>
+                <!-- Locale -->
+                <div class="section-title"><i class="fas fa-globe"></i> Locale & Time</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="locale" class="form-label">Locale</label>
+                        <% const loc = clubSettings ? (clubSettings.locale || 'en-US') : 'en-US'; %>
+                        <select id="locale" name="locale" class="form-select">
+                            <option value="en-US" <%= loc==='en-US'?'selected':'' %>>English (US)</option>
+                            <option value="en-GB" <%= loc==='en-GB'?'selected':'' %>>English (UK)</option>
+                            <option value="es-ES" <%= loc==='es-ES'?'selected':'' %>>Español (ES)</option>
+                        </select>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="secondary_color">Secondary Color</label>
-                            <input type="color" id="secondary_color" name="secondary_color" class="color-input"
-                                   value="<%= clubSettings ? clubSettings.secondary_color || '#764ba2' : '#764ba2' %>">
-                            <small class="help-text">Accent color for highlights and links</small>
-                        </div>
+                    <div class="form-group">
+                        <label for="timezone" class="form-label">Timezone</label>
+                        <% const tz = clubSettings ? (clubSettings.timezone || 'America/New_York') : 'America/New_York'; %>
+                        <select id="timezone" name="timezone" class="form-select">
+                            <option value="America/New_York" <%= tz==='America/New_York'?'selected':'' %>>America/New_York</option>
+                            <option value="America/Chicago" <%= tz==='America/Chicago'?'selected':'' %>>America/Chicago</option>
+                            <option value="America/Denver" <%= tz==='America/Denver'?'selected':'' %>>America/Denver</option>
+                            <option value="America/Los_Angeles" <%= tz==='America/Los_Angeles'?'selected':'' %>>America/Los_Angeles</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-globe"></i> Regional Settings</h3>
+                <div class="form-actions">
+                    <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Save</button>
                 </div>
-                <div class="card-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="locale">Language/Locale</label>
-                            <select id="locale" name="locale">
-                                <option value="en-US" <%= clubSettings && clubSettings.locale === 'en-US' ? 'selected' : '' %>>English (US)</option>
-                                <option value="en-GB" <%= clubSettings && clubSettings.locale === 'en-GB' ? 'selected' : '' %>>English (UK)</option>
-                                <option value="es-ES" <%= clubSettings && clubSettings.locale === 'es-ES' ? 'selected' : '' %>>Spanish</option>
-                                <option value="fr-FR" <%= clubSettings && clubSettings.locale === 'fr-FR' ? 'selected' : '' %>>French</option>
-                                <option value="de-DE" <%= clubSettings && clubSettings.locale === 'de-DE' ? 'selected' : '' %>>German</option>
-                                <option value="pt-BR" <%= clubSettings && clubSettings.locale === 'pt-BR' ? 'selected' : '' %>>Portuguese (Brazil)</option>
-                            </select>
-                            <small class="help-text">Default language for date formats and system messages</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="timezone">Default Timezone</label>
-                            <select id="timezone" name="timezone">
-                                <option value="America/New_York" <%= clubSettings && clubSettings.timezone === 'America/New_York' ? 'selected' : '' %>>Eastern Time (America/New_York)</option>
-                                <option value="America/Chicago" <%= clubSettings && clubSettings.timezone === 'America/Chicago' ? 'selected' : '' %>>Central Time (America/Chicago)</option>
-                                <option value="America/Denver" <%= clubSettings && clubSettings.timezone === 'America/Denver' ? 'selected' : '' %>>Mountain Time (America/Denver)</option>
-                                <option value="America/Los_Angeles" <%= clubSettings && clubSettings.timezone === 'America/Los_Angeles' ? 'selected' : '' %>>Pacific Time (America/Los_Angeles)</option>
-                                <option value="America/Phoenix" <%= clubSettings && clubSettings.timezone === 'America/Phoenix' ? 'selected' : '' %>>Arizona Time (America/Phoenix)</option>
-                                <option value="America/Anchorage" <%= clubSettings && clubSettings.timezone === 'America/Anchorage' ? 'selected' : '' %>>Alaska Time (America/Anchorage)</option>
-                                <option value="Pacific/Honolulu" <%= clubSettings && clubSettings.timezone === 'Pacific/Honolulu' ? 'selected' : '' %>>Hawaii Time (Pacific/Honolulu)</option>
-                                <option value="Europe/London" <%= clubSettings && clubSettings.timezone === 'Europe/London' ? 'selected' : '' %>>London Time (Europe/London)</option>
-                                <option value="Europe/Paris" <%= clubSettings && clubSettings.timezone === 'Europe/Paris' ? 'selected' : '' %>>Paris Time (Europe/Paris)</option>
-                                <option value="Asia/Tokyo" <%= clubSettings && clubSettings.timezone === 'Asia/Tokyo' ? 'selected' : '' %>>Tokyo Time (Asia/Tokyo)</option>
-                            </select>
-                            <small class="help-text">Default timezone for your club (can be overridden per location)</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Save Settings
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     <footer class="footer">
@@ -186,6 +178,7 @@
             <p>&copy; 2025 DojoPro. All rights reserved.</p>
         </div>
     </footer>
+
     <script src="/js/main.js"></script>
 </body>
 </html>
