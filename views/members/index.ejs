@@ -3,11 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Members - DojoPro Admin</title>
+    <title><%= title %></title>
+    <link href="/css/admin.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Members Management</h1>
-    <p>Members functionality - Coming Soon</p>
-    <a href="/dashboard">← Back to Dashboard</a>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🥋 DojoPro</div>
+            <div class="club-info">
+                <% if (userClub) { %>
+                    <div class="club-name"><%= userClub.club_name %></div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Club Management Portal</div>
+                <% } %>
+            </div>
+            <div class="user-info">
+                <div><%= user.first_name %> <%= user.last_name %></div>
+                <form method="POST" action="/logout" style="display: inline;">
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard">DojoPro Admin</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/members" class="nav-link active">
+                    <i class="fas fa-users"></i> Members
+                </a>
+                <a href="/locations" class="nav-link">
+                    <i class="fas fa-map-marker-alt"></i> Locations
+                </a>
+                <a href="/staff" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Staff
+                </a>
+                <a href="/checkins" class="nav-link">
+                    <i class="fas fa-clock"></i> Check-ins
+                </a>
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1><i class="fas fa-users"></i> Members Management</h1>
+            <a href="/members/add" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Member
+            </a>
+        </div>
+
+        <% if (messages.success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= messages.success %>
+            </div>
+        <% } %>
+
+        <% if (messages.error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= messages.error %>
+            </div>
+        <% } %>
+
+            <!-- Members List -->
+            <div class="card">
+                <% if (members && members.length > 0) { %>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Belt Rank</th>
+                                <th>Membership</th>
+                                <th>Household</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% members.forEach(function(member) { %>
+                                <tr>
+                                    <td>
+                                        <%= member.first_name %> <%= member.last_name %>
+                                        <% if (member.is_primary_member) { %>
+                                            <span class="badge badge-info">Primary</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= member.email || 'Not provided' %></td>
+                                    <td><%= member.phone || 'Not provided' %></td>
+                                    <td>
+                                        <% if (member.status === 'active') { %>
+                                            <span class="badge badge-success">Active</span>
+                                        <% } else if (member.status === 'pending') { %>
+                                            <span class="badge badge-warning">Pending</span>
+                                        <% } else if (member.status === 'suspended') { %>
+                                            <span class="badge badge-danger">Suspended</span>
+                                        <% } else { %>
+                                            <span class="badge badge-secondary"><%= member.status %></span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= member.belt_rank || 'Not set' %></td>
+                                    <td><%= member.membership_type %></td>
+                                    <td><%= member.household_name || 'Individual' %></td>
+                                    <td><%= new Date(member.created_at).toLocaleDateString() %></td>
+                                    <td>
+                                        <div class="actions">
+                                            <a href="/members/<%= member.member_id %>/edit" class="btn btn-secondary">Edit</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>No Members Found</h3>
+                        <p>Start by adding your first member to the club.</p>
+                        <a href="/members/add" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Your First Member
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 DojoPro. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/js/main.js"></script>
 </body>
 </html>

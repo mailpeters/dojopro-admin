@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="/css/admin.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🥋 DojoPro</div>
+            <div class="club-info">
+                <% if (userClub) { %>
+                    <div class="club-name"><%= userClub.club_name %></div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Club Management Portal</div>
+                <% } %>
+            </div>
+            <div class="user-info">
+                <div><%= user.first_name %> <%= user.last_name %></div>
+                <form method="POST" action="/logout" style="display: inline;">
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/dashboard">DojoPro Admin</a>
+            </div>
+            <div class="nav-menu">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/members" class="nav-link active">
+                    <i class="fas fa-users"></i> Members
+                </a>
+                <a href="/locations" class="nav-link">
+                    <i class="fas fa-map-marker-alt"></i> Locations
+                </a>
+                <a href="/staff" class="nav-link">
+                    <i class="fas fa-user-tie"></i> Staff
+                </a>
+                <a href="/checkins" class="nav-link">
+                    <i class="fas fa-clock"></i> Check-ins
+                </a>
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1><i class="fas fa-user-plus"></i> Add New Member</h1>
+            <a href="/members" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Members
+            </a>
+        </div>
+
+        <% if (messages.success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= messages.success %>
+            </div>
+        <% } %>
+
+        <% if (messages.error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= messages.error %>
+            </div>
+        <% } %>
+
+            <!-- Add Member Form -->
+            <div class="card">
+                <form method="POST" action="/members/create">
+                    <!-- Personal Information -->
+                    <div class="section-title"><i class="fas fa-user"></i> Personal Information</div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" id="first_name" name="first_name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" id="last_name" name="last_name" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="belt_rank" class="form-label">Belt Rank</label>
+                            <input type="text" id="belt_rank" name="belt_rank" class="form-input" placeholder="e.g., White Belt, Yellow Belt">
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="section-title"><i class="fas fa-address-book"></i> Contact Information</div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" id="email" name="email" class="form-input">
+                            <div class="form-help">Used for member portal access and notifications</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="form-input">
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact -->
+                    <div class="section-title"><i class="fas fa-exclamation-triangle"></i> Emergency Contact</div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
+                            <input type="text" id="emergency_contact_name" name="emergency_contact_name" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emergency_contact_phone" class="form-label">Emergency Contact Phone</label>
+                            <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" class="form-input">
+                        </div>
+                    </div>
+
+                    <!-- Membership Information -->
+                    <div class="section-title"><i class="fas fa-id-card"></i> Membership Information</div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="membership_type" class="form-label">Membership Type</label>
+                            <select id="membership_type" name="membership_type" class="form-select">
+                                <option value="individual">Individual</option>
+                                <option value="family">Family</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="household_group">
+                            <label for="household_id" class="form-label">Household (for family members)</label>
+                            <select id="household_id" name="household_id" class="form-select">
+                                <option value="">Create New Household</option>
+                                <% if (households && households.length > 0) { %>
+                                    <% households.forEach(function(household) { %>
+                                        <option value="<%= household.household_id %>">
+                                            <%= household.household_name %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                            <div class="form-help">Leave blank to create a new household for this member</div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <a href="/members" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add Member</button>
+                    </div>
+                </form>
+            </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 DojoPro. All rights reserved.</p>
+        </div>
+    </footer>
+    <script src="/js/main.js"></script>
+    <script>
+        // Show/hide household selection based on membership type
+        document.getElementById('membership_type').addEventListener('change', function() {
+            const householdGroup = document.getElementById('household_group');
+            if (this.value === 'family') {
+                householdGroup.style.display = 'block';
+            } else {
+                householdGroup.style.display = 'none';
+                document.getElementById('household_id').value = '';
+            }
+        });
+
+        // Initialize household visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const membershipType = document.getElementById('membership_type').value;
+            const householdGroup = document.getElementById('household_group');
+            if (membershipType !== 'family') {
+                householdGroup.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
