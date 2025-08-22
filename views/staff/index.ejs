@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Management - DojoPro Admin</title>
+    <title>Staff Management - ClubDirector Admin</title>
     <link href="/css/admin.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -11,7 +11,7 @@
     <!-- Header -->
     <div class="header">
         <div class="header-content">
-            <div class="logo">🥋 DojoPro</div>
+            <div class="logo">📊 ClubDirector</div>
             <div class="club-info">
                 <% if (userClub) { %>
                     <div class="club-name"><%= userClub.club_name %></div>
@@ -30,7 +30,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <a href="/dashboard">DojoPro Admin</a>
+                <a href="/dashboard">ClubDirector Admin</a>
             </div>
             <div class="nav-menu">
                 <a href="/dashboard" class="nav-link">
@@ -75,70 +75,64 @@
             </div>
         <% } %>
 
-        <% if (staff && staff.length > 0) { %>
-            <div class="staff-grid">
-                <% staff.forEach(member => { %>
-                    <div class="staff-card <%= member.is_primary_contact ? 'primary' : '' %>">
-                        <div class="staff-header <%= member.is_primary_contact ? 'primary' : '' %>">
-                            <div class="staff-name">
-                                <i class="fas fa-user-tie"></i>
-                                <%= member.first_name %> <%= member.last_name %>
-                                <% if (member.is_primary_contact) { %>
-                                    <span class="primary-badge">
-                                        <i class="fas fa-star"></i> Primary
-                                    </span>
-                                <% } %>
-                            </div>
-                        </div>
-                        <div class="staff-body">
-                            <div class="staff-info">
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-envelope"></i> Email
+        <!-- Staff List -->
+        <div class="card">
+            <% if (staff && staff.length > 0) { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% staff.forEach(function(member) { %>
+                            <tr>
+                                <td>
+                                    <%= member.first_name %> <%= member.last_name %>
+                                    <% if (member.is_primary_contact) { %>
+                                        <span class="badge badge-info">Primary</span>
+                                    <% } %>
+                                </td>
+                                <td><%= member.email %></td>
+                                <td><%= member.phone || 'Not provided' %></td>
+                                <td>
+                                    <% if (member.role === 'owner') { %>
+                                        <span class="badge badge-success">Owner</span>
+                                    <% } else if (member.role === 'admin') { %>
+                                        <span class="badge badge-warning">Admin</span>
+                                    <% } else if (member.role === 'instructor') { %>
+                                        <span class="badge badge-info">Instructor</span>
+                                    <% } else { %>
+                                        <span class="badge badge-secondary"><%= member.role.charAt(0).toUpperCase() + member.role.slice(1) %></span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (member.is_primary_contact) { %>
+                                        <span class="badge badge-success">Primary Contact</span>
+                                    <% } else { %>
+                                        <span class="badge badge-secondary">Staff</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="actions">
+                                        <a href="/staff/<%= member.user_id %>/edit" class="btn btn-secondary">Edit</a>
+                                        <% if (member.role !== 'owner') { %>
+                                            <form method="POST" action="/staff/<%= member.user_id %>/delete" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger" 
+                                                        onclick="return confirm('Are you sure you want to remove this staff member?')">Remove</button>
+                                            </form>
+                                        <% } %>
                                     </div>
-                                    <div class="info-value">
-                                        <%= member.email %>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-phone"></i> Phone
-                                    </div>
-                                    <div class="info-value">
-                                        <%= member.phone || 'Not provided' %>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-item">
-                                    <div class="info-label">
-                                        <i class="fas fa-user-tag"></i> Role
-                                    </div>
-                                    <div class="info-value">
-                                        <span class="role-badge <%= member.role %>">
-                                            <%= member.role.charAt(0).toUpperCase() + member.role.slice(1) %>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="staff-actions">
-                                <a href="/staff/<%= member.user_id %>/edit" class="btn btn-secondary">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                <% if (member.role !== 'owner') { %>
-                                    <form method="POST" action="/staff/<%= member.user_id %>/delete" style="display: inline;">
-                                        <button type="submit" class="btn btn-danger" 
-                                                onclick="return confirm('Are you sure you want to remove this staff member?')">
-                                            <i class="fas fa-trash"></i> Remove
-                                        </button>
-                                    </form>
-                                <% } %>
-                            </div>
-                        </div>
-                    </div>
-                <% }); %>
-            </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
         <% } else { %>
             <div class="empty-state">
                 <i class="fas fa-user-tie"></i>
@@ -149,11 +143,12 @@
                 </a>
             </div>
         <% } %>
+        </div>
     </div>
 
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2025 DojoPro. All rights reserved.</p>
+            <p>&copy; 2025 ClubDirector. All rights reserved.</p>
         </div>
     </footer>
     <script src="/js/main.js"></script>

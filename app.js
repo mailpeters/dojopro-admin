@@ -1,5 +1,7 @@
 const express = require('express');
-const mysql = require('mysql2');
+
+//const mysql = require('mysql2');
+
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const flash = require('express-flash');
@@ -25,13 +27,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 
-
+/*
 // Database connection
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'dojoapp',
+    user: 'clubapp',
     password: 'djppass',
-    database: 'dojopro'
+    database: 'clubdirector'
 });
 
 // Test database connection
@@ -42,6 +44,30 @@ db.connect((err) => {
         console.log('Connected to MariaDB database');
     }
 });
+
+*/
+
+
+// Database connection from claud 0822
+const pool = require('./database');
+
+// Legacy db connection for compatibility
+const mysql = require('mysql2');
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'clubapp',
+    password: 'djppass',
+    database: 'clubdirector'
+});
+
+db.connect((err) => {
+    if (err) {
+        console.error('Database connection failed:', err);
+    } else {
+        console.log('Connected to MariaDB database');
+    }
+});
+
 
 // Set view engine
 app.set('view engine', 'ejs');
@@ -55,7 +81,7 @@ app.use(cookieParser());
 
 // Session configuration
 app.use(session({
-    secret: 'dojopro-admin-secret-key-change-in-production',
+    secret: 'clubdirector-admin-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -84,6 +110,7 @@ const requireAuth = (req, res, next) => {
 };
 
 
+/*
 // Ensure active club in session
 app.use(async (req, res, next) => {
   try {
@@ -106,6 +133,31 @@ app.use(async (req, res, next) => {
   }
 });
 
+*/
+
+
+// Ensure active club in session
+app.use(async (req, res, next) => {
+    try {
+        if (!req.session?.user?.user_id) return next();
+        if (!req.session.clubId) {
+            const [rows] = await pool.query(
+                `SELECT cs.club_id
+                 FROM club_staff cs
+                 WHERE cs.user_id = ? 
+                 ORDER BY (cs.role='owner') DESC, cs.role, cs.club_id
+                 LIMIT 1`,
+                [req.session.user.user_id]
+            );
+            if (rows && rows[0]) req.session.clubId = rows[0].club_id;
+        }
+        next();
+    } catch (e) {
+        console.error('setActiveClub error', e);
+        next();
+    }
+});
+
 
 // Middleware to check if user owns the club
 const requireClubAccess = async (req, res, next) => {
@@ -120,7 +172,7 @@ const requireClubAccess = async (req, res, next) => {
                 SELECT cs.club_id, cs.role, c.club_name
                 FROM club_staff cs 
                 JOIN clubs c ON cs.club_id = c.club_id
-                WHERE cs.user_id = ? AND c.status = 'active'
+                WHERE cs.user_id = ? AND c.deleted_at IS NULL
             `, [req.session.user.user_id], (err, results) => {
                 if (err) reject(err);
                 else resolve(results);
@@ -161,7 +213,7 @@ app.get('/login', (req, res) => {
         return res.redirect('/dashboard');
     }
     res.render('auth/login', {
-        title: 'Login - DojoPro Admin'
+        title: 'Login - ClubDirector Admin'
     });
 });
 
@@ -170,8 +222,8 @@ app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            req.flash('error', 'Please provide email and password');
+        if (!email) {
+            req.flash('error', 'Please provide email');
             return res.redirect('/login');
         }
 
@@ -184,14 +236,20 @@ app.post('/login', async (req, res) => {
         });
 
         if (!user) {
-            req.flash('error', 'Invalid email or password');
+            req.flash('error', 'Invalid email');
             return res.redirect('/login');
         }
 
-        // Check if password is still temporary
+        // Check if password is still temporary - allow login without password for setup
         if (user.password_hash === 'TEMP_HASH_TO_BE_SET') {
             req.flash('info', 'Please set up your password');
             return res.redirect(`/setup-password?email=${encodeURIComponent(email)}`);
+        }
+
+        // For non-temporary users, password is required
+        if (!password) {
+            req.flash('error', 'Please provide password');
+            return res.redirect('/login');
         }
 
         // Verify password
@@ -280,6 +338,14 @@ app.post('/club/settings', /* auth? */ upload.single('logo'), async (req, res) =
 
 
 
+// Setup page for users without club access
+app.get('/setup', requireAuth, (req, res) => {
+    res.render('auth/setup', {
+        title: 'Account Setup - ClubDirector Admin',
+        layout: 'auth'
+    });
+});
+
 // Password setup page
 app.get('/setup-password', (req, res) => {
     const email = req.query.email;
@@ -289,7 +355,7 @@ app.get('/setup-password', (req, res) => {
     }
 
     res.render('auth/setup-password', {
-        title: 'Set Up Password - DojoPro Admin',
+        title: 'Set Up Password - ClubDirector Admin',
         email: email
     });
 });
@@ -381,7 +447,7 @@ app.get('/dashboard', requireAuth, requireClubAccess, async (req, res) => {
         });
 
         res.render('dashboard/index', {
-            title: 'Dashboard - DojoPro Admin',
+            title: 'Dashboard - ClubDirector Admin',
             stats,
             recentMembers
         });
@@ -561,7 +627,7 @@ app.get('/members', requireAuth, requireClubAccess, async (req, res) => {
         });
 
         res.render('members/index', {
-            title: 'Members - DojoPro Admin',
+            title: 'Members - ClubDirector Admin',
             members
         });
 
@@ -584,7 +650,7 @@ app.get('/members/add', requireAuth, requireClubAccess, async (req, res) => {
         });
 
         res.render('members/add', {
-            title: 'Add Member - DojoPro Admin',
+            title: 'Add Member - ClubDirector Admin',
             households
         });
 
@@ -625,7 +691,7 @@ app.post('/members/create', requireAuth, requireClubAccess, async (req, res) => 
             }
         }
 
-        let finalHouseholdId = household_id;
+        let finalHouseholdId = household_id || null;
 
         // Create new household if needed
         if (membership_type === 'family' && !household_id) {
@@ -671,6 +737,116 @@ app.post('/members/create', requireAuth, requireClubAccess, async (req, res) => 
     }
 });
 
+// Edit member GET route
+app.get('/members/:member_id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const memberId = req.params.member_id;
+        
+        // Get member details
+        const member = await new Promise((resolve, reject) => {
+            db.query(`
+                SELECT m.*, h.household_name
+                FROM members m
+                LEFT JOIN households h ON m.household_id = h.household_id
+                WHERE m.member_id = ? AND m.club_id = ? AND m.deleted_at IS NULL
+            `, [memberId, req.userClub.club_id], (err, results) => {
+                if (err) reject(err);
+                else resolve(results[0]);
+            });
+        });
+
+        if (!member) {
+            req.flash('error', 'Member not found');
+            return res.redirect('/members');
+        }
+
+        // Get households for dropdown
+        const households = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM households WHERE club_id = ? ORDER BY household_name', 
+                [req.userClub.club_id], (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            });
+        });
+
+        res.render('members/edit', {
+            title: 'Edit Member - ClubDirector Admin',
+            member: member,
+            households: households
+        });
+    } catch (error) {
+        console.error('Edit member form error:', error);
+        req.flash('error', 'Error loading member details');
+        res.redirect('/members');
+    }
+});
+
+// Edit member POST route
+app.post('/members/:member_id/edit', requireAuth, requireClubAccess, async (req, res) => {
+    try {
+        const memberId = req.params.member_id;
+        const {
+            first_name, last_name, email, phone, date_of_birth,
+            membership_type, belt_rank, household_id,
+            emergency_contact_name, emergency_contact_phone, medical_notes
+        } = req.body;
+
+        // Validate required fields
+        if (!first_name || !last_name) {
+            req.flash('error', 'First name and last name are required');
+            return res.redirect(`/members/${memberId}/edit`);
+        }
+
+        // Check if email already exists for another member in this club
+        if (email) {
+            const existingMember = await new Promise((resolve, reject) => {
+                db.query(`
+                    SELECT member_id FROM members 
+                    WHERE club_id = ? AND email = ? AND member_id != ? AND deleted_at IS NULL
+                `, [req.userClub.club_id, email, memberId], (err, results) => {
+                    if (err) reject(err);
+                    else resolve(results);
+                });
+            });
+
+            if (existingMember.length > 0) {
+                req.flash('error', 'A member with this email already exists');
+                return res.redirect(`/members/${memberId}/edit`);
+            }
+        }
+
+        let finalHouseholdId = household_id || null;
+
+        // Update member
+        await new Promise((resolve, reject) => {
+            db.query(`
+                UPDATE members SET
+                    first_name = ?, last_name = ?, email = ?, phone = ?,
+                    date_of_birth = ?, membership_type = ?, belt_rank = ?,
+                    household_id = ?, emergency_contact_name = ?, 
+                    emergency_contact_phone = ?, medical_notes = ?, updated_at = NOW()
+                WHERE member_id = ? AND club_id = ?
+            `, [
+                first_name, last_name, email || null, phone || null,
+                date_of_birth || null, membership_type || 'individual', belt_rank || null,
+                finalHouseholdId, emergency_contact_name || null,
+                emergency_contact_phone || null, medical_notes || null,
+                memberId, req.userClub.club_id
+            ], (err, results) => {
+                if (err) reject(err);
+                else resolve(results);
+            });
+        });
+
+        req.flash('success', `Member ${first_name} ${last_name} updated successfully!`);
+        res.redirect('/members');
+    } catch (error) {
+        console.error('Update member error:', error);
+        req.flash('error', 'Error updating member');
+        res.redirect(`/members/${req.params.member_id}/edit`);
+    }
+});
+
 // Locations Management
 app.get('/locations', requireAuth, requireClubAccess, async (req, res) => {
     try {
@@ -683,7 +859,7 @@ app.get('/locations', requireAuth, requireClubAccess, async (req, res) => {
         });
 
         res.render('locations/index', {
-            title: 'Locations - DojoPro Admin',
+            title: 'Locations - ClubDirector Admin',
             locations
         });
 
